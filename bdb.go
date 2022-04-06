@@ -72,7 +72,7 @@ func NewDBInEnvironment(env *Environment) (*Db, error) {
 }
 
 // OpenWithTxn opens the database in transaction mode (transactions are not yet supported by all
-// funtions)
+// functions)
 func (handle *Db) OpenWithTxn(filename string, txn *C.DB_TXN, dbtype C.DBTYPE, flags C.u_int32_t) error {
 	db := handle.db
 	file := C.CString(filename)
@@ -227,9 +227,7 @@ func (cursor *Cursor) GetLast() (string, string, error) {
 // Version returns the version of the database and binding
 func Version() string {
 	libVersion := C.GoString(C.db_full_version(nil, nil, nil, nil, nil))
-
-	tpl := "%s (Go bindings v%s)"
-	return fmt.Sprintf(tpl, libVersion, version)
+	return fmt.Sprintf("%v (Go bindings v%s)", libVersion, version)
 }
 
 // DBError contains the database Error

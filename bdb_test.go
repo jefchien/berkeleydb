@@ -3,19 +3,19 @@ package berkeleydb_test
 import (
 	"testing"
 
-	"github.com/jsimonetti/berkeleydb"
+	"github.com/jefchien/berkeleydb"
 )
 
 const TestFilename = "test_db.db"
 
 func TestNewDB(t *testing.T) {
-
 	_, err := berkeleydb.NewDB()
 
 	if err != nil {
 		t.Errorf("Expected error code 0, got %d", err)
 	}
 }
+
 func TestOpen(t *testing.T) {
 	db, err := berkeleydb.NewDB()
 
@@ -34,7 +34,7 @@ func TestOpen(t *testing.T) {
 		t.Errorf("Could not get Flags: %s", err)
 	}
 	if flags != berkeleydb.DbCreate {
-		t.Errorf("Expected flag to match DB_CREATE, got %d", flags)
+		t.Errorf("Expected flag to match DB_CREATE, got %v", flags)
 	}
 
 	err = db.Close()
@@ -61,13 +61,9 @@ func openDB() (*berkeleydb.Db, error) {
 	return db, nil
 }
 
-func closeDB(db *berkeleydb.Db) error {
-	return db.Close()
-}
-
 func TestPut(t *testing.T) {
 	db, err := openDB()
-	defer closeDB(db)
+	defer db.Close()
 
 	err = db.Put("key", "value")
 	if err != nil {
@@ -77,7 +73,7 @@ func TestPut(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	db, err := openDB()
-	defer closeDB(db)
+	defer db.Close()
 
 	err = db.Put("key", "value")
 	if err != nil {
@@ -97,7 +93,7 @@ func TestGet(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	db, err := openDB()
-	defer closeDB(db)
+	defer db.Close()
 
 	err = db.Put("key", "value")
 	if err != nil {
@@ -109,7 +105,7 @@ func TestDelete(t *testing.T) {
 		t.Error("Expected a clean delete, got ", err)
 	}
 
-	err = db.Delete("nosuchkey")
+	err = db.Delete("no_such_key")
 	if err == nil {
 		t.Error("Expected error, got ", err)
 	}
@@ -131,15 +127,15 @@ func TestRename(t *testing.T) {
 
 	db, _ = berkeleydb.NewDB()
 
-	newname := "foo_" + TestFilename
-	err := db.Rename(TestFilename, newname)
+	newName := "foo_" + TestFilename
+	err := db.Rename(TestFilename, newName)
 	if err != nil {
-		t.Errorf("Could not rename %s to %s", TestFilename, newname)
+		t.Errorf("Could not rename %s to %s", TestFilename, newName)
 	}
 
 	db, _ = berkeleydb.NewDB()
-	err = db.Remove(newname)
+	err = db.Remove(newName)
 	if err != nil {
-		t.Errorf("Could not remove %s", newname)
+		t.Errorf("Could not remove %s", newName)
 	}
 }

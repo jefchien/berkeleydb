@@ -128,11 +128,11 @@ func TestCursor(t *testing.T) {
 
 	actual := make(map[string]string)
 	for {
-		k, v, err := cursor.Get(berkeleydb.DbNext)
+		k, v, err := cursor.GetString(berkeleydb.DbNext)
 		if err != nil {
 			break
 		}
-		actual[string(k)] = string(v)
+		actual[k] = v
 	}
 	require.Equal(t, len(expected), len(actual))
 	require.Equal(t, expected, actual)

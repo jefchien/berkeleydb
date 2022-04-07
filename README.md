@@ -43,7 +43,6 @@ func main() {
                 return
         }
         fmt.Printf("value: %s\n", value)
-
 }
 
 ```

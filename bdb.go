@@ -12,7 +12,7 @@ import (
 	"unsafe"
 )
 
-const version string = "0.0.1"
+const version string = "0.0.2"
 
 // Flags for opening a database or environment.
 const (
@@ -34,6 +34,15 @@ const (
 	DbUnknown = C.DB_UNKNOWN
 )
 
+type CursorMode int
+
+const (
+	DbNext  CursorMode = C.DB_NEXT
+	DbPrev  CursorMode = C.DB_PREV
+	DbFirst CursorMode = C.DB_FIRST
+	DbLast  CursorMode = C.DB_LAST
+)
+
 // Db is the structure that holds the database connection
 type Db struct {
 	db *C.DB
@@ -50,24 +59,18 @@ type Errno int
 // NewDB initialises a new bdb connection
 func NewDB() (*Db, error) {
 	var db *C.DB
-	err := C.db_create(&db, nil, 0)
-
-	if err > 0 {
-		return nil, createError(err)
+	if ret := C.db_create(&db, nil, 0); ret > 0 {
+		return nil, createError(ret)
 	}
-
 	return &Db{db}, nil
 }
 
 // NewDBInEnvironment initialises a new bdb connection in an environment
 func NewDBInEnvironment(env *Environment) (*Db, error) {
 	var db *C.DB
-	err := C.db_create(&db, env.environ, 0)
-
-	if err > 0 {
-		return nil, createError(err)
+	if ret := C.db_create(&db, env.environ, 0); ret > 0 {
+		return nil, createError(ret)
 	}
-
 	return &Db{db}, nil
 }
 
@@ -79,7 +82,6 @@ func (handle *Db) OpenWithTxn(filename string, txn *C.DB_TXN, dbtype C.DBTYPE, f
 	defer C.free(unsafe.Pointer(file))
 
 	ret := C.go_db_open(db, txn, file, nil, dbtype, flags, 0)
-
 	return createError(ret)
 }
 
@@ -89,23 +91,19 @@ func (handle *Db) Open(filename string, dbtype C.DBTYPE, flags C.u_int32_t) erro
 	defer C.free(unsafe.Pointer(file))
 
 	ret := C.go_db_open(handle.db, nil, file, nil, dbtype, flags, 0)
-
 	return createError(ret)
 }
 
 // Close the database file
 func (handle *Db) Close() error {
 	ret := C.go_db_close(handle.db, 0)
-
 	return createError(ret)
 }
 
 // Flags returns the flags of the database connection
 func (handle *Db) Flags() (C.u_int32_t, error) {
 	var flags C.u_int32_t
-
 	ret := C.go_db_get_open_flags(handle.db, &flags)
-
 	return flags, createError(ret)
 }
 
@@ -115,111 +113,68 @@ func (handle *Db) Remove(filename string) error {
 	defer C.free(unsafe.Pointer(file))
 
 	ret := C.go_db_remove(handle.db, file)
-
 	return createError(ret)
 }
 
-// Rename the database filename
-func (handle *Db) Rename(oldname, newname string) error {
-	oname := C.CString(oldname)
-	defer C.free(unsafe.Pointer(oname))
-	nname := C.CString(newname)
-	defer C.free(unsafe.Pointer(nname))
+// Rename the database filename.
+func (handle *Db) Rename(oldName, newName string) error {
+	o := C.CString(oldName)
+	defer C.free(unsafe.Pointer(o))
+	n := C.CString(newName)
+	defer C.free(unsafe.Pointer(n))
 
-	ret := C.go_db_rename(handle.db, oname, nname)
-
+	ret := C.go_db_rename(handle.db, o, n)
 	return createError(ret)
 }
 
-// Put a key/value pair into the database
-func (handle *Db) Put(name, value string) error {
-	nname := C.CString(name)
-	defer C.free(unsafe.Pointer(nname))
-	nvalue := C.CString(value)
-	defer C.free(unsafe.Pointer(nvalue))
+// Put a key/value pair into the database.
+func (handle *Db) Put(key, value string) error {
+	k := C.CString(key)
+	defer C.free(unsafe.Pointer(k))
+	v := C.CString(value)
+	defer C.free(unsafe.Pointer(v))
 
-	ret := C.go_db_put_string(handle.db, nname, nvalue, 0)
-	if ret > 0 {
-		return createError(ret)
-	}
-	return nil
-}
-
-// Get a value from the database by key
-func (handle *Db) Get(name string) (string, error) {
-	value := C.CString("")
-	defer C.free(unsafe.Pointer(value))
-	nname := C.CString(name)
-	defer C.free(unsafe.Pointer(nname))
-
-	ret := C.go_db_get_string(handle.db, nname, value)
-	return C.GoString(value), createError(ret)
-}
-
-// Delete a value from the database by key
-func (handle *Db) Delete(name string) error {
-	nname := C.CString(name)
-	defer C.free(unsafe.Pointer(nname))
-
-	ret := C.go_db_del_string(handle.db, nname)
+	ret := C.go_db_put_string(handle.db, k, v, 0)
 	return createError(ret)
 }
 
-//Cursor returns a handle for the database cursor
+// Get a value from the database by key.
+func (handle *Db) Get(key string) (string, error) {
+	v := C.CString("")
+	defer C.free(unsafe.Pointer(v))
+	k := C.CString(key)
+	defer C.free(unsafe.Pointer(k))
+
+	ret := C.go_db_get_string(handle.db, k, v)
+	return C.GoString(v), createError(ret)
+}
+
+// Delete a value from the database by key.
+func (handle *Db) Delete(key string) error {
+	k := C.CString(key)
+	defer C.free(unsafe.Pointer(k))
+
+	ret := C.go_db_del_string(handle.db, k)
+	return createError(ret)
+}
+
+// Cursor returns a handle for the database cursor.
 func (handle *Db) Cursor() (*Cursor, error) {
 	var dbc *C.DBC
-
-	err := C.go_db_cursor(handle.db, &dbc)
-
-	if err > 0 {
+	if err := C.go_db_cursor(handle.db, &dbc); err > 0 {
 		return nil, createError(err)
 	}
-
 	return &Cursor{dbc}, nil
 }
 
-//GetNext moves the cursor to the next entry and returns the key/value pair
-func (cursor *Cursor) GetNext() (string, string, error) {
-	value := C.CString("")
-	defer C.free(unsafe.Pointer(value))
-	key := C.CString("")
-	defer C.free(unsafe.Pointer(key))
-
-	ret := C.go_cursor_get_next(cursor.dbc, key, value)
-	return C.GoString(key), C.GoString(value), createError(ret)
-}
-
-//GetPrevious moves the cursor to the previous entry and returns the key/value pair
-func (cursor *Cursor) GetPrevious() (string, string, error) {
-	value := C.CString("")
-	defer C.free(unsafe.Pointer(value))
-	key := C.CString("")
-	defer C.free(unsafe.Pointer(key))
-
-	ret := C.go_cursor_get_prev(cursor.dbc, key, value)
-	return C.GoString(key), C.GoString(value), createError(ret)
-}
-
-//GetFirst moves the cursor to the first entry and returns the key/value pair
-func (cursor *Cursor) GetFirst() (string, string, error) {
-	value := C.CString("")
-	defer C.free(unsafe.Pointer(value))
-	key := C.CString("")
-	defer C.free(unsafe.Pointer(key))
-
-	ret := C.go_cursor_get_first(cursor.dbc, key, value)
-	return C.GoString(key), C.GoString(value), createError(ret)
-}
-
-//GetLast moves the cursor to the last entry and returns the key/value pair
-func (cursor *Cursor) GetLast() (string, string, error) {
-	value := C.CString("")
-	defer C.free(unsafe.Pointer(value))
-	key := C.CString("")
-	defer C.free(unsafe.Pointer(key))
-
-	ret := C.go_cursor_get_last(cursor.dbc, key, value)
-	return C.GoString(key), C.GoString(value), createError(ret)
+//Get moves the cursor based on the mode and returns the key/value pair
+func (cursor *Cursor) Get(mode CursorMode) (key, value []byte, err error) {
+	var k, v C.DBT
+	ret := C.go_cursor_get(cursor.dbc, &k, &v, C.int(mode))
+	key = C.GoBytes(unsafe.Pointer(k.data), C.int(k.size))
+	value = C.GoBytes(unsafe.Pointer(v.data), C.int(v.size))
+	err = createError(ret)
+	return
 }
 
 // UTILITY FUNCTIONS

@@ -22,6 +22,10 @@ func TestNewDB(t *testing.T) {
 	require.NotNil(t, db)
 }
 
+func TestVersion(t *testing.T) {
+	require.NotNil(t, berkeleydb.Version())
+}
+
 func TestOpen(t *testing.T) {
 	db, err := berkeleydb.NewDB()
 	require.NoError(t, err)

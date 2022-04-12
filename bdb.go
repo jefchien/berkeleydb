@@ -12,7 +12,7 @@ import (
 	"unsafe"
 )
 
-const version string = "0.0.3"
+const version string = "0.0.4"
 
 // Flags for opening a database or environment.
 const (
@@ -193,7 +193,7 @@ func (cursor *Cursor) GetString(mode CursorMode) (key, value string, err error) 
 
 // Version returns the version of the database and binding.
 func Version() string {
-	libVersion := C.GoString(C.db_full_version(nil, nil, nil, nil, nil))
+	libVersion := C.GoString(C.db_version(nil, nil, nil))
 	return fmt.Sprintf("%v (Go bindings v%s)", libVersion, version)
 }
 

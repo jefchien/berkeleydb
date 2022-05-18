@@ -179,14 +179,9 @@ func (cursor *Cursor) Get(mode CursorMode) (key, value []byte, err error) {
 }
 
 // GetString moves the cursor based on the mode and returns the string key/value pair.
-func (cursor *Cursor) GetString(mode CursorMode) (key, value string, err error) {
-	k := C.CString("")
-	defer C.free(unsafe.Pointer(k))
-	v := C.CString("")
-	defer C.free(unsafe.Pointer(v))
-
-	ret := C.go_cursor_get_string(cursor.dbc, &k, &v, C.int(mode))
-	return C.GoString(k), C.GoString(v), createError(ret)
+func (cursor *Cursor) GetString(mode CursorMode) (string, string, error) {
+	k, v, err := cursor.Get(mode)
+	return string(k), string(v), err
 }
 
 // UTILITY FUNCTIONS

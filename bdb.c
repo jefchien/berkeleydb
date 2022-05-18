@@ -63,7 +63,9 @@ int go_db_get_string(DB* dbp, char* key, char** value) {
 
   k.data = key;
   k.size = strlen(key);
+
   v.flags = DB_DBT_MALLOC;
+  *value = NULL;
 
   int ret = dbp->get(dbp, NULL, &k, &v, 0);
   if (ret == 0) {
@@ -88,20 +90,4 @@ int go_db_cursor(DB* dbp, DBC** dbcp) {
 
 int go_cursor_get(DBC* dbcp, DBT* key, DBT* value, int mode) {
   return dbcp->c_get(dbcp, key, value, mode);
-}
-
-int go_cursor_get_string(DBC* dbcp, char** key, char** value, int mode) {
-  DBT k, v;
-  memset(&k, 0, sizeof(k));
-  memset(&v, 0, sizeof(v));
-
-  k.flags = DB_DBT_MALLOC;
-  v.flags = DB_DBT_MALLOC;
-
-  int ret = dbcp->c_get(dbcp, &k, &v, mode);
-  if (ret == 0) {
-    *key = (char*)k.data;
-    *value = (char*)v.data;
-  }
-  return ret;
 }

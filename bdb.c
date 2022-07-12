@@ -26,8 +26,8 @@ int go_db_remove(DB* dbp, char* filename) {
   return dbp->remove(dbp, filename, NULL, 0);
 }
 
-int go_db_rename(DB* dbp, char* old_name, char* new_name) {
-  return dbp->rename(dbp, old_name, NULL, new_name, 0);
+int go_db_rename(DB* dbp, char* filename, char* new_name) {
+  return dbp->rename(dbp, filename, NULL, new_name, 0);
 }
 
 int go_env_open(DB_ENV* env, char* dirname, u_int32_t flags, u_int32_t mode) {
@@ -39,7 +39,7 @@ int go_env_close(DB_ENV* env, u_int32_t flags) {
 }
 
 int go_db_put_string(DB* dbp, char* key, char* value, u_int32_t flags) {
-  // Create two DB records and initialize them.
+  // Create two DBT records and initialize them.
   DBT k, v;
   memset(&k, 0, sizeof(k));
   memset(&v, 0, sizeof(v));
@@ -56,7 +56,7 @@ int go_db_put_string(DB* dbp, char* key, char* value, u_int32_t flags) {
 }
 
 int go_db_get_string(DB* dbp, char* key, char** value) {
-  // Create two DB records and initialize them.
+  // Create two DBT records and initialize them.
   DBT k, v;
   memset(&k, 0, sizeof(k));
   memset(&v, 0, sizeof(v));
@@ -64,6 +64,7 @@ int go_db_get_string(DB* dbp, char* key, char** value) {
   k.data = key;
   k.size = strlen(key);
 
+  // Allocates memory for returned value data.
   v.flags = DB_DBT_MALLOC;
   *value = NULL;
 
@@ -90,4 +91,8 @@ int go_db_cursor(DB* dbp, DBC** dbcp) {
 
 int go_cursor_get(DBC* dbcp, DBT* key, DBT* value, int mode) {
   return dbcp->c_get(dbcp, key, value, mode);
+}
+
+int go_cursor_close(DBC* dbcp) {
+  return dbcp->c_close(dbcp);
 }

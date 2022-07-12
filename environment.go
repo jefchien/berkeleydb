@@ -16,7 +16,7 @@ type Environment struct {
 func NewEnvironment() (*Environment, error) {
 	var env *C.DB_ENV
 	err := C.db_env_create(&env, 0)
-	if err > 0 {
+	if err != 0 {
 		return nil, createError(err)
 	}
 

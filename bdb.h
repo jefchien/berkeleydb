@@ -16,3 +16,4 @@ int go_db_get_string(DB *, char *, char **);
 int go_db_del_string(DB *, char *);
 int go_db_cursor(DB *, DBC **);
 int go_cursor_get(DBC *, DBT *, DBT *, int);
+int go_cursor_close(DBC *);
